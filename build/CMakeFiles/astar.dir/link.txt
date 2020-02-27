@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc ../lib/libastar.a  CMakeFiles/astar.dir/src/a_star.cpp.o CMakeFiles/astar.dir/src/astar_env_gen.cpp.o CMakeFiles/astar.dir/src/backward_repetitive_astar.cpp.o CMakeFiles/astar.dir/src/forward_repetitive_astar.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib ../lib/libastar.a
