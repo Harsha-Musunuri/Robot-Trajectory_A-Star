@@ -10,6 +10,7 @@ private:
 	int visited_status = 0; //0 if blocked, 1 if unblocked
 	int h_val;
 	int g_val;
+	int g_prev;
 	int f_val;
 	int parent_x, parent_y;
 public:
@@ -79,6 +80,15 @@ public:
 	void set_parent_y(int parent_y){
 		this->parent_y = parent_y;
 	}
+
+	int get_g_prev(){
+		return this->g_prev;
+	}
+	void set_g_prev(int g_prev){
+		this->g_prev = g_prev;
+	}
+
+
 };
 
 

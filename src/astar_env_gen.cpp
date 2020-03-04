@@ -153,6 +153,13 @@ grid_cell **generate_astar_env(grid_cell **grid_cell_object, int grid_height, in
     }
 }
 
+void destroy_astart_env(grid_cell **grid_cell_object, int grid_height, int grid_width){
+	for(int index = 0; index < grid_width; index ++){
+		free(grid_cell_object[index]);
+	}
+	free(grid_cell_object);
+}
+
 void visualize_maze_grid(grid_cell **grid_cell_object, int grid_height, int grid_width){
 	int total = 5 * grid_width;
 	char c;

@@ -113,6 +113,35 @@ void reset_visited_status(grid_cell **grid_cell_object,
 	}
 }
 
+void copy_previous_g(grid_cell **grid_cell_object,
+					std::vector<std::pair<int, int>> &closed_list){
+	for(int i = 0; i < closed_list.size(); i++){
+		int k= grid_cell_object[closed_list[i].first][closed_list[i].second].get_g_val();
+		grid_cell_object[closed_list[i].first][closed_list[i].second].set_g_prev(k);
+		// std::cout<<"g_prev"<<grid_cell_object[closed_list[i].first][closed_list[i].second].get_g_prev()<<"\n";
+	}
+}
+void update_h_val(grid_cell **grid_cell_object,
+				std::vector<std::pair<int, int>> &closed_list,std::vector<int> &path_vector){
+	for(int i = 0; i < closed_list.size(); i++){
+		int k= (path_vector.size())-(grid_cell_object[closed_list[i].first][closed_list[i].second].get_g_prev());
+		// std::cout<<"updated h value of "<<closed_list[i].first<<" "<<closed_list[i].second<<"is "<<k<<"\n";
+		grid_cell_object[closed_list[i].first][closed_list[i].second].set_h_val(k);
+	}
+}
+
+void printHG(grid_cell **grid_cell_object,int grid_height,int grid_width,std::vector<int> &path_vector){
+
+	std::cout<< "g* value of is "<<path_vector.size()<<"\n";
+	for(int i = 0; i < grid_height; i++){
+		for(int j = 0; j< grid_width; j++){
+			std::cout<<grid_cell_object[i][j].get_h_val()<< " " << grid_cell_object[i][j].get_g_val()<<"\t";
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
 void fill_path_vector(grid_cell **grid_cell_object,
 						int grid_height, int grid_width,
 						int start_cell_x, int start_cell_y,
@@ -194,7 +223,7 @@ void coordinate_to_directions(std::vector<std::pair<int,int>> &coordinates, int 
 			std::cout << "Left ";
 		}
 	}
-	std::cout << std::endl << std::endl;
+	// std::cout << std::endl << std::endl;
 }
 
 void clean_path(std::vector<std::pair<int,int>> &coordinates){
@@ -393,6 +422,188 @@ void run_astar(grid_cell **grid_cell_object,
 				target_cell_x, target_cell_y,
 				mode_for_resolving_tie);
 }
+void run_adaptive_astar(grid_cell **grid_cell_object,
+				std::vector<int> &f_func_heap,
+				std::vector<std::pair<int, int>> &closed_list,
+				std::map<std::pair<int, int>, std::vector<int>> &blocked_list,
+				std::multimap<int, std::vector<int>> &f_func_values_map,
+				int grid_height, int grid_width,
+				int start_cell_x, int start_cell_y,
+				int curr_cell_x, int curr_cell_y,
+				int target_cell_x, int target_cell_y,
+				int mode_for_resolving_tie){
+	// std::cout << "Into A*\n";
+	// std::cout << curr_cell_x << curr_cell_y <<std::endl;
+
+	bool is_movement_blocked;
+	std::vector<int> temp_vector;
+	std::vector<int> blocked_directions;
+	std::pair<int, int> curr_cell_pair = {curr_cell_x, curr_cell_y};
+	std::pair<int, int> next_cell_pair;
+	std::map<std::pair<int, int>, std::vector<int>>::iterator iterator;
+
+	closed_list.push_back(curr_cell_pair);
+	grid_cell_object[curr_cell_x][curr_cell_y].set_visited_status(true);
+
+	if(curr_cell_x == target_cell_x && curr_cell_y == target_cell_y){
+		// std::cout << "GVAL " << grid_cell_object[curr_cell_x][curr_cell_y].get_g_val() << std::endl;
+		return;
+	}
+
+	next_cell_pair = {curr_cell_x-1, curr_cell_y};
+	iterator = blocked_list.find(curr_cell_pair);
+	if(iterator == blocked_list.end()){
+		is_movement_blocked = false;
+	}
+	else{
+		blocked_directions = iterator->second;
+		if (std::binary_search(blocked_directions.begin(), blocked_directions.end(), 1))
+			is_movement_blocked = true;
+		else
+			is_movement_blocked = false;
+	}
+	if(curr_cell_x > 0 && (!grid_cell_object[curr_cell_x-1][curr_cell_y].get_visited_status()) &&
+							(std::find(closed_list.begin(), closed_list.end(), next_cell_pair) == closed_list.end()) &&
+							(!is_movement_blocked)){
+
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_h_val(manhattan_distance(curr_cell_x - 1, curr_cell_y, target_cell_x, target_cell_y));
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_g_val(grid_cell_object[curr_cell_x][curr_cell_y].get_g_val() + 1);
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_f_val(grid_cell_object[curr_cell_x-1][curr_cell_y].get_h_val() +
+																grid_cell_object[curr_cell_x-1][curr_cell_y].get_g_val());
+		temp_vector = {};
+		f_func_heap.push_back(grid_cell_object[curr_cell_x-1][curr_cell_y].get_f_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x-1][curr_cell_y].get_h_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x-1][curr_cell_y].get_g_val());
+		temp_vector.push_back(curr_cell_x - 1);
+		temp_vector.push_back(curr_cell_y);
+		f_func_values_map.insert(std::pair<int,std::vector<int>> (grid_cell_object[curr_cell_x-1][curr_cell_y].get_f_val(), temp_vector));
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_visited_status(true);
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_parent_x(curr_cell_x);
+		grid_cell_object[curr_cell_x-1][curr_cell_y].set_parent_y(curr_cell_y);
+	}
+
+	next_cell_pair = {curr_cell_x, curr_cell_y+1};
+	iterator = blocked_list.find(curr_cell_pair);
+	if(iterator == blocked_list.end()){
+		is_movement_blocked = false;
+	}
+	else{
+		blocked_directions = iterator->second;
+		if (std::binary_search(blocked_directions.begin(), blocked_directions.end(), 2))
+			is_movement_blocked = true;
+		else
+			is_movement_blocked = false;
+	}
+	if (curr_cell_y < grid_width - 1 && (!grid_cell_object[curr_cell_x][curr_cell_y+1].get_visited_status()) &&
+										(std::find(closed_list.begin(), closed_list.end(), next_cell_pair) == closed_list.end()) &&
+										(!is_movement_blocked)){
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_h_val(manhattan_distance(curr_cell_x, curr_cell_y + 1, target_cell_x, target_cell_y));
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_g_val(grid_cell_object[curr_cell_x][curr_cell_y].get_g_val() + 1);
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_f_val(grid_cell_object[curr_cell_x][curr_cell_y+1].get_h_val() +
+																grid_cell_object[curr_cell_x][curr_cell_y+1].get_g_val());
+		temp_vector = {};
+		f_func_heap.push_back(grid_cell_object[curr_cell_x][curr_cell_y+1].get_f_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x][curr_cell_y+1].get_h_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x][curr_cell_y+1].get_g_val());
+		temp_vector.push_back(curr_cell_x);
+		temp_vector.push_back(curr_cell_y + 1);
+		f_func_values_map.insert(std::pair<int,std::vector<int>> (grid_cell_object[curr_cell_x][curr_cell_y+1].get_f_val(), temp_vector));
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_visited_status(true);
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_parent_x(curr_cell_x);
+		grid_cell_object[curr_cell_x][curr_cell_y+1].set_parent_y(curr_cell_y);
+	}
+
+	next_cell_pair = {curr_cell_x+1, curr_cell_y};
+	iterator = blocked_list.find(curr_cell_pair);
+	if(iterator == blocked_list.end()){
+		is_movement_blocked = false;
+	}
+	else{
+		blocked_directions = iterator->second;
+		if (std::binary_search(blocked_directions.begin(), blocked_directions.end(), 3))
+			is_movement_blocked = true;
+		else
+			is_movement_blocked = false;
+	}
+	if (curr_cell_x < grid_height - 1 && (!grid_cell_object[curr_cell_x+1][curr_cell_y].get_visited_status()) &&
+										(std::find(closed_list.begin(), closed_list.end(), next_cell_pair) == closed_list.end()) &&
+										(!is_movement_blocked)){
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_h_val(manhattan_distance(curr_cell_x+1, curr_cell_y, target_cell_x, target_cell_y));
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_g_val(grid_cell_object[curr_cell_x][curr_cell_y].get_g_val() + 1);
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_f_val(grid_cell_object[curr_cell_x+1][curr_cell_y].get_h_val() +
+																grid_cell_object[curr_cell_x+1][curr_cell_y].get_g_val());
+		temp_vector = {};
+		f_func_heap.push_back(grid_cell_object[curr_cell_x+1][curr_cell_y].get_f_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x+1][curr_cell_y].get_h_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x+1][curr_cell_y].get_g_val());
+		temp_vector.push_back(curr_cell_x+1);
+		temp_vector.push_back(curr_cell_y);
+		f_func_values_map.insert(std::pair<int,std::vector<int>> (grid_cell_object[curr_cell_x+1][curr_cell_y].get_f_val(), temp_vector));
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_visited_status(true);
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_parent_x(curr_cell_x);
+		grid_cell_object[curr_cell_x+1][curr_cell_y].set_parent_y(curr_cell_y);
+	}
+
+	next_cell_pair = {curr_cell_x, curr_cell_y-1};
+	iterator = blocked_list.find(curr_cell_pair);
+	if(iterator == blocked_list.end()){
+		is_movement_blocked = false;
+	}
+	else{
+		blocked_directions = iterator->second;
+		if (std::binary_search(blocked_directions.begin(), blocked_directions.end(), 4))
+			is_movement_blocked = true;
+		else
+			is_movement_blocked = false;
+	}
+
+	if(curr_cell_y > 0 && (!grid_cell_object[curr_cell_x][curr_cell_y-1].get_visited_status()) &&
+							(std::find(closed_list.begin(), closed_list.end(), next_cell_pair) == closed_list.end()) &&
+							(!is_movement_blocked)){
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_h_val(manhattan_distance(curr_cell_x, curr_cell_y-1, target_cell_x, target_cell_y));
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_g_val(grid_cell_object[curr_cell_x][curr_cell_y].get_g_val() + 1);
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_f_val(grid_cell_object[curr_cell_x][curr_cell_y-1].get_h_val() +
+																grid_cell_object[curr_cell_x][curr_cell_y-1].get_g_val());
+		temp_vector = {};
+		f_func_heap.push_back(grid_cell_object[curr_cell_x][curr_cell_y-1].get_f_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x][curr_cell_y-1].get_h_val());
+		temp_vector.push_back(grid_cell_object[curr_cell_x][curr_cell_y-1].get_g_val());
+		temp_vector.push_back(curr_cell_x);
+		temp_vector.push_back(curr_cell_y-1);
+		f_func_values_map.insert(std::pair<int,std::vector<int>> (grid_cell_object[curr_cell_x][curr_cell_y-1].get_f_val(), temp_vector));
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_visited_status(true);
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_parent_x(curr_cell_x);
+		grid_cell_object[curr_cell_x][curr_cell_y-1].set_parent_y(curr_cell_y);
+	}
+
+	make_heap(f_func_heap.begin(), f_func_heap.end());
+	sort_heap(f_func_heap.begin(), f_func_heap.end());
+
+	int best_coord_x;
+	int best_coord_y;
+
+	bool tie = check_for_tie(f_func_heap.front(), f_func_values_map);
+	if(tie){
+		resolve_tie(f_func_heap.front(), f_func_values_map, &best_coord_x, &best_coord_y, mode_for_resolving_tie);
+	}
+	else{
+		auto it = f_func_values_map.find(f_func_heap.front());
+		best_coord_x = it->second[2];
+		best_coord_y = it->second[3];
+		f_func_values_map.erase(it);
+	}
+	f_func_heap.erase(f_func_heap.begin()+0);
+
+	run_adaptive_astar(grid_cell_object, f_func_heap,
+				closed_list, blocked_list,
+				f_func_values_map,
+				grid_height, grid_width,
+				start_cell_x, start_cell_y,
+				best_coord_x, best_coord_y,
+				target_cell_x, target_cell_y,
+				mode_for_resolving_tie);
+}
+
 // void run_astar(grid_cell **grid_cell_object,
 // 				std::vector<int> &f_func_heap,
 // 				std::vector<std::pair<int, int>> &closed_list,

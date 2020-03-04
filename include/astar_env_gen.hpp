@@ -12,5 +12,6 @@ bool check_if_direction_possible(int grid_height, int grid_width, int point_x, i
 grid_cell **init_env(int grid_height, int grid_width, int *starting_point_x, int *starting_point_y);
 grid_cell **generate_astar_env(grid_cell **grid_cell_object, int grid_height, int grid_width, int point_x, int point_y);
 void visualize_maze_grid(grid_cell **grid_cell_object, int grid_height, int grid_width);
+void destroy_astart_env(grid_cell **grid_cell_object, int grid_height, int grid_width);
 
 #endif

@@ -40,5 +40,21 @@ void run_astar(grid_cell **grid_cell_object,
 				int curr_cell_x, int curr_cell_y,
 				int target_cell_x, int target_cell_y,
 				int mode_for_resolving_tie);
+void run_adaptive_astar(grid_cell **grid_cell_object,
+				std::vector<int> &f_func_heap,
+				std::vector<std::pair<int, int>> &closed_list,
+				std::map<std::pair<int, int>, std::vector<int>> &blocked_list,
+				std::multimap<int, std::vector<int>> &f_func_values_map,
+				int grid_height, int grid_width,
+				int start_cell_x, int start_cell_y,
+				int curr_cell_x, int curr_cell_y,
+				int target_cell_x, int target_cell_y,
+				int mode_for_resolving_tie);
+void copy_previous_g(grid_cell **grid_cell_object,
+							std::vector<std::pair<int, int>> &closed_list);
+
+void update_h_val(grid_cell **grid_cell_object,
+							std::vector<std::pair<int, int>> &closed_list,std::vector<int> &path_vector);
+// void printHG(grid_cell **grid_cell_object,int grid_height,int grid_width,);
 
 #endif
